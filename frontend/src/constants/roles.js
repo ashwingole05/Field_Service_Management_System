@@ -1,0 +1,6 @@
+export const ROLES = Object.freeze({
+  MANAGER: "MANAGER",
+  DISPATCHER: "DISPATCHER",
+  TECHNICIAN: "TECHNICIAN",
+  CUSTOMER: "CUSTOMER",
+});

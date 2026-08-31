@@ -1,0 +1,18 @@
+import api from "./axios";
+const base = "/api/workorders";
+export const getWorkOrders = () => api.get(base);
+export const getWorkOrder = (id) => api.get(`${base}/${id}`);
+export const createWorkOrder = (payload) => api.post(base, payload);
+export const updateWorkOrder = (id, payload) => api.put(`${base}/${id}`, payload);
+export const deleteWorkOrder = (id) => api.delete(`${base}/${id}`);
+export const getWorkOrdersBySite = (siteId) => api.get(`${base}/site/${siteId}`);
+export const getWorkOrdersByTechnician = (technicianId) => api.get(`${base}/technician/${technicianId}`);
+export const getWorkOrdersByStatus = (status) => api.get(`${base}/status/${status}`);
+export const assignTechnician = (id, technicianId) => api.put(`${base}/${id}/assign/${technicianId}`);
+export const acceptWorkOrder = (id) => api.put(`${base}/${id}/accept`);
+export const startWorkOrder = (id) => api.put(`${base}/${id}/start`);
+export const holdWorkOrder = (id) => api.put(`${base}/${id}/hold`);
+export const resumeWorkOrder = (id) => api.put(`${base}/${id}/resume`);
+export const completeWorkOrder = (id) => api.put(`${base}/${id}/complete`);
+export const cancelWorkOrder = (id) => api.put(`${base}/${id}/cancel`);
+export const closeWorkOrder = (id) => api.put(`${base}/${id}/close`);
