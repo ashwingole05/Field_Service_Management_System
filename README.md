@@ -22,7 +22,31 @@ Keystone is a full-stack Field Service Management application for managing custo
 5. Axios
 6. React Router
 
-## 2. Project Structure
+## 2. Live Deployment
+
+### 2.1 Frontend URL
+
+```text
+https://keystone-fieldservice.netlify.app
+```
+
+### 2.2 Backend URL
+
+```text
+https://keystone-fieldservice.onrender.com
+```
+
+### 2.3 Backend Health Check
+
+```http
+GET https://keystone-fieldservice.onrender.com/actuator/health
+```
+
+### 2.4 Render Wake-Up Note
+> [!NOTE]
+> The backend is hosted on Render. If the backend has been inactive for some time, the first request may take extra time because Render needs to wake the service. After the first request completes, the following requests should respond faster.
+
+## 3. Project Structure
 
 ```text
 com.FieldService/
@@ -42,9 +66,9 @@ com.FieldService/
     +-- src/
 ```
 
-## 3. Local Setup
+## 4. Local Setup
 
-### 3.1 Backend Setup
+### 4.1 Backend Setup
 
 Go to the backend folder:
 
@@ -92,7 +116,7 @@ Health check:
 GET http://localhost:8081/actuator/health
 ```
 
-### 3.2 Frontend Setup
+### 4.2 Frontend Setup
 
 Go to the frontend folder:
 
@@ -124,7 +148,7 @@ Frontend URL:
 http://localhost:5173
 ```
 
-## 4. Authentication
+## 5. Authentication
 
 The backend uses JWT authentication.
 
@@ -134,7 +158,7 @@ After login, pass the token in every protected API request:
 Authorization: Bearer <jwt_token>
 ```
 
-### 4.1 Login Request
+### 5.1 Login Request
 
 ```http
 POST /api/user_auth/login
@@ -147,7 +171,7 @@ POST /api/user_auth/login
 }
 ```
 
-### 4.2 Login Response
+### 5.2 Login Response
 
 ```json
 {
@@ -156,7 +180,7 @@ POST /api/user_auth/login
 }
 ```
 
-## 5. Roles
+## 6. Roles
 
 | Role | Description |
 | --- | --- |
@@ -165,9 +189,9 @@ POST /api/user_auth/login
 | TECHNICIAN | Works on assigned work orders, logs time, and uses parts |
 | CUSTOMER | Creates sites and raises service requests |
 
-## 6. Role Permissions
+## 7. Role Permissions
 
-### 6.1 Manager
+### 7.1 Manager
 
 Manager has all permissions.
 
@@ -182,7 +206,7 @@ Manager can:
 7. View SLA reports
 8. Review and convert service requests
 
-### 6.2 Dispatcher
+### 7.2 Dispatcher
 
 Dispatcher can:
 
@@ -194,7 +218,7 @@ Dispatcher can:
 6. Convert service requests to work orders
 7. Close or cancel service requests
 
-### 6.3 Technician
+### 7.3 Technician
 
 Technician can:
 
@@ -209,7 +233,7 @@ Technician can:
 9. Add time logs
 10. View time logs
 
-### 6.4 Customer
+### 7.4 Customer
 
 Customer can:
 
@@ -218,7 +242,7 @@ Customer can:
 3. Raise service request
 4. View own service requests
 
-## 7. API Base URL
+## 8. API Base URL
 
 For local development:
 
@@ -228,7 +252,13 @@ http://localhost:8081
 
 For live deployment, use the deployed backend URL.
 
-## 8. Public APIs
+For live backend:
+
+```text
+https://keystone-fieldservice.onrender.com
+```
+
+## 9. Public APIs
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
@@ -242,9 +272,9 @@ For live deployment, use the deployed backend URL.
 | POST | `/api/email_log/notify` | Send notification email |
 | GET | `/actuator/health` | Backend health check |
 
-## 9. Auth APIs
+## 10. Auth APIs
 
-### 9.1 Register Customer
+### 10.1 Register Customer
 
 ```http
 POST /api/user_auth/register
@@ -262,7 +292,7 @@ Request body:
 }
 ```
 
-### 9.2 Login
+### 10.2 Login
 
 ```http
 POST /api/user_auth/login
@@ -277,7 +307,7 @@ Request body:
 }
 ```
 
-### 9.3 Get Current User
+### 10.3 Get Current User
 
 ```http
 GET /api/user_auth/me
@@ -289,7 +319,7 @@ Requires:
 Authorization: Bearer <jwt_token>
 ```
 
-### 9.4 Get Technicians
+### 10.4 Get Technicians
 
 ```http
 GET /api/user_auth/technicians
@@ -302,7 +332,7 @@ VIEW_USER
 ASSIGN_WO
 ```
 
-### 9.5 Get Staff Users
+### 10.5 Get Staff Users
 
 ```http
 GET /api/user_auth/staff
@@ -314,7 +344,7 @@ Allowed permission:
 VIEW_USER
 ```
 
-### 9.6 Create Staff User
+### 10.6 Create Staff User
 
 ```http
 POST /api/user_auth/staff
@@ -338,19 +368,19 @@ Request body:
 }
 ```
 
-### 9.7 Forgot Password
+### 10.7 Forgot Password
 
 ```http
 POST /api/user_auth/forgetPassword?userEmail=user@example.com
 ```
 
-### 9.8 Reset Password
+### 10.8 Reset Password
 
 ```http
 POST /api/user_auth/resetPassword?token=reset-token&newPassword=newPassword123
 ```
 
-## 10. Customer APIs
+## 11. Customer APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -375,7 +405,7 @@ Request body:
 }
 ```
 
-## 11. Site APIs
+## 12. Site APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -400,7 +430,7 @@ Request body:
 }
 ```
 
-## 12. Service Request APIs
+## 13. Service Request APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -435,7 +465,7 @@ CLOSED
 CANCELLED
 ```
 
-## 13. Work Order APIs
+## 14. Work Order APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -492,7 +522,7 @@ HIGH
 CRITICAL
 ```
 
-## 14. Parts APIs
+## 15. Parts APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -514,7 +544,7 @@ Request body:
 }
 ```
 
-## 15. Work Order Parts APIs
+## 16. Work Order Parts APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -532,7 +562,7 @@ Request body:
 }
 ```
 
-## 16. Time Log APIs
+## 17. Time Log APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
@@ -552,20 +582,28 @@ Request body:
 }
 ```
 
-## 17. Dashboard APIs
+## 18. Dashboard APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
 | GET | `/api/dashboard` | VIEW_DASHBOARD |
 
-## 18. SLA APIs
+## 19. SLA APIs
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
 | GET | `/api/sla/overdue` | VIEW_REPORTS |
 | GET | `/api/sla/overdue/count` | VIEW_REPORTS |
 
-## 19. Common Workflow
+## 20. Postman Collection
+
+Use this Postman collection to test the APIs:
+
+```text
+https://gemini-api-4388.postman.co/workspace/SpringAi-demo~f58e6eb7-eb31-40b7-a543-9bd1e05cf9d5/collection/46686891-6038d9d5-f466-4a9b-8b26-f29355870e6c?action=share&creator=46686891&active-environment=46686891-acea7e03-70fc-423a-b4d7-a69fd8f22a51
+```
+
+## 21. Common Workflow
 
 1. Create the first manager using `/api/user_auth/setup-manager`.
 2. Login as manager.
@@ -582,10 +620,13 @@ Request body:
 13. Dispatcher or manager closes the work order.
 14. Manager reviews dashboard and SLA reports.
 
-## 20. Important Notes
+## 22. Important Notes
 
 1. Keep NeonDB credentials in environment variables.
 2. `application.properties` uses environment placeholders.
 3. Localhost and live deployment can use the same NeonDB database when the same database variables are configured.
 4. Default frontend origin is `http://localhost:5173`.
 5. Default backend port is `8081`.
+6. The live frontend is `https://keystone-fieldservice.netlify.app`.
+7. The live backend is `https://keystone-fieldservice.onrender.com`.
+8. Render may take extra time to respond on the first request after inactivity.
