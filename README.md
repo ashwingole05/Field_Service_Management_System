@@ -26,21 +26,15 @@ Keystone is a full-stack Field Service Management application for managing custo
 
 ### 2.1 Frontend URL
 
-```text
-https://keystone-fieldservice.netlify.app
-```
+[https://keystone-fieldservice.netlify.app](https://keystone-fieldservice.netlify.app)
 
 ### 2.2 Backend URL
 
-```text
-https://keystone-fieldservice.onrender.com
-```
+[https://keystone-fieldservice.onrender.com](https://keystone-fieldservice.onrender.com)
 
-### 2.3 Backend Health Check
+### 2.3 Backend Health Check (GET)
 
-```http
-GET https://keystone-fieldservice.onrender.com/actuator/health
-```
+[https://keystone-fieldservice.onrender.com/actuator/health](https://keystone-fieldservice.onrender.com/actuator/health)
 
 ### 2.4 Render Wake-Up Note
 > [!NOTE]
