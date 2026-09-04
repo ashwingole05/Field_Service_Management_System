@@ -22,6 +22,9 @@ Keystone is a full-stack Field Service Management application for managing custo
 5. Axios
 6. React Router
 
+### 1.3 Database 
+1. PostgreSQL / NeonDB
+
 ## 2. Live Deployment
 
 ### 2.1 Frontend URL
