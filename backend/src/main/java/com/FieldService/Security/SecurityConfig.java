@@ -1,5 +1,7 @@
 package com.FieldService.Security;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -56,6 +58,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Allow browser CORS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -68,6 +73,9 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
+                        .requestMatchers(this::isFrontendRoute)
+                        .permitAll()
+
                         .anyRequest()
                         .authenticated()
                 )
@@ -78,5 +86,16 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    private boolean isFrontendRoute(HttpServletRequest request) {
+        if (!HttpMethod.GET.matches(request.getMethod())) {
+            return false;
+        }
+
+        String path = request.getServletPath();
+
+        return !path.startsWith("/api")
+                && !path.startsWith("/actuator");
     }
 }
