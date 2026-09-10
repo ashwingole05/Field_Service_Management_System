@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+**/.idea
+**/.metadata
+**/.settings
+**/target
+**/node_modules
+**/dist
+*.iml
+.env
+.env.*

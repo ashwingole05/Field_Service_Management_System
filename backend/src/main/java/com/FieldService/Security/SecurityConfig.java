@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -56,6 +58,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Allow browser CORS preflight requests
+                        .requestMatchers(SecurityConfig::isPreflightRequest)
+                        .permitAll()
+
+                        // Allow React app routes; API and actuator routes are handled separately.
+                        .requestMatchers(SecurityConfig::isFrontendRoute)
+                        .permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -78,5 +87,24 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    private static boolean isPreflightRequest(HttpServletRequest request) {
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+
+    private static boolean isFrontendRoute(HttpServletRequest request) {
+        String method = request.getMethod();
+
+        if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) {
+            return false;
+        }
+
+        String path = request.getRequestURI();
+
+        return !path.startsWith("/api/")
+                && !path.equals("/api")
+                && !path.startsWith("/actuator/")
+                && !path.equals("/actuator");
     }
 }

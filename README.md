@@ -1,103 +1,105 @@
 # Keystone Field Service Management
 
-Keystone is a full-stack Field Service Management application for managing customers, sites, service requests, work orders, technicians, parts, time logs, SLA reports, and dashboard analytics.
+Keystone is a full-stack field service management platform for coordinating customers, sites, service requests, work orders, technicians, inventory, time logs, SLA tracking, and operational dashboards.
 
-## 1. Tech Stack
+The application is designed to run as a single deployed service: the React frontend is built into the Spring Boot backend and both the UI and API are served from one URL.
 
-### 1.1 Backend
+## Features
 
-1. Java 25
-2. Spring Boot
-3. Spring Security
-4. JWT Authentication
-5. Spring Data JPA
-6. PostgreSQL / NeonDB
+- JWT-based authentication and role-based authorization
+- Customer, site, service request, and work order management
+- Technician assignment and work order lifecycle tracking
+- Parts inventory and work order part usage
+- Time logging for technician work
+- SLA reporting and dashboard analytics
+- One-url Docker deployment for frontend and backend
 
-### 1.2 Frontend
+## Tech Stack
 
-1. React
-2. Vite
-3. Ant Design
-4. Tailwind CSS
-5. Axios
-6. React Router
+| Area | Technology |
+| --- | --- |
+| Frontend | React, Vite, React Router, Ant Design, Tailwind CSS, Axios |
+| Backend | Java 25, Spring Boot, Spring Security, Spring Data JPA |
+| Database | PostgreSQL / NeonDB |
+| Build and Deploy | Maven, npm, Docker |
 
-### 1.3 Database 
-1. PostgreSQL / NeonDB
-
-## 2. Live Deployment
-
-### 2.1 Frontend URL
-
-[https://keystone-fieldservice.netlify.app](https://keystone-fieldservice.netlify.app)
-
-### 2.2 Backend URL
-
-[https://keystone-fieldservice.onrender.com](https://keystone-fieldservice.onrender.com)
-
-### 2.3 Backend Health Check (GET)
-
-[https://keystone-fieldservice.onrender.com/actuator/health](https://keystone-fieldservice.onrender.com/actuator/health)
-
-### 2.4 Render Wake-Up Note
-> [!NOTE]
-> The backend is hosted on Render. If the backend has been inactive for some time, the first request may take extra time because Render needs to wake the service. After the first request completes, the following requests should respond faster.
-
-## 3. Project Structure
+## Architecture
 
 ```text
 com.FieldService/
++-- Dockerfile                  # Production Docker build for frontend + backend
++-- .dockerignore
++-- README.md
 +-- backend/
 |   +-- pom.xml
 |   +-- src/main/java/com/FieldService/
-|       +-- Controller/
-|       +-- DTO/
-|       +-- Entity/
-|       +-- Repository/
-|       +-- Security/
-|       +-- Service/
-|
+|   |   +-- Controller/
+|   |   +-- DTO/
+|   |   +-- Entity/
+|   |   +-- Repository/
+|   |   +-- Security/
+|   |   +-- Service/
+|   +-- src/main/resources/
+|       +-- application.properties
 +-- frontend/
     +-- package.json
-    +-- .env
+    +-- vite.config.js
     +-- src/
 ```
 
-## 4. Local Setup
+Production flow:
 
-### 4.1 Backend Setup
+1. Docker builds the React app from `frontend`.
+2. The generated `frontend/dist` files are copied into `backend/src/main/resources/static`.
+3. Maven packages the Spring Boot application.
+4. Spring Boot serves both frontend routes and backend APIs from the same origin.
 
-Go to the backend folder:
+## Environment Variables
 
-```bash
-cd backend
-```
-
-Add the required environment variables:
+Create a `.env` file for localhost Docker usage or configure these variables in your live hosting provider.
 
 ```env
 DATABASE_URL=jdbc:postgresql://YOUR_NEON_HOST/YOUR_DATABASE?sslmode=require
 DATABASE_USERNAME=YOUR_NEON_USERNAME
 DATABASE_PASSWORD=YOUR_NEON_PASSWORD
-PORT=8081
+
 JWT_SECRET=your_64_character_secret
 JWT_EXPIRATION_MS=43200000
-CORS_ALLOWED_ORIGINS=http://localhost:5173
+
 MAIL_HOST=sandbox.smtp.mailtrap.io
 MAIL_PORT=2525
 MAIL_USERNAME=your_mailtrap_username
 MAIL_PASSWORD=your_mailtrap_password
+
+PORT=10000
+CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-Run backend on Windows:
+Notes:
+
+- `PORT` defaults to `8081` in Spring Boot and `10000` in the Docker image.
+- `CORS_ALLOWED_ORIGINS` is mainly needed during local split frontend/backend development.
+- In one-url deployment, frontend API requests use relative `/api/...` paths.
+
+## Local Development
+
+Use this setup when working on the application locally.
+
+### Run Services Separately
+
+Run the backend and frontend separately for day-to-day development.
+
+Start the backend:
 
 ```powershell
+cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-Run backend on macOS/Linux:
+On macOS/Linux, use:
 
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
 
@@ -113,29 +115,11 @@ Health check:
 GET http://localhost:8081/actuator/health
 ```
 
-### 4.2 Frontend Setup
-
-Go to the frontend folder:
+Start the frontend in a separate terminal:
 
 ```bash
 cd frontend
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Create or update `.env`:
-
-```env
-VITE_API_URL=http://localhost:8081
-```
-
-Run frontend:
-
-```bash
 npm run dev
 ```
 
@@ -145,157 +129,80 @@ Frontend URL:
 http://localhost:5173
 ```
 
-## 5. Authentication
+During local development, the Vite dev server proxies `/api` and `/actuator` requests to `http://localhost:8081`. You can also set `VITE_API_URL=http://localhost:8081` if you want an explicit frontend API base URL.
 
-The backend uses JWT authentication.
+### Run With Docker
 
-After login, pass the token in every protected API request:
+Build and run the complete application from one localhost URL:
 
-```http
-Authorization: Bearer <jwt_token>
+```bash
+docker build -t keystone-fieldservice .
+docker run -p 10000:10000 --env-file .env keystone-fieldservice
 ```
 
-### 5.1 Login Request
-
-```http
-POST /api/user_auth/login
-```
-
-```json
-{
-  "userEmail": "manager@example.com",
-  "password": "password123"
-}
-```
-
-### 5.2 Login Response
-
-```json
-{
-  "token": "jwt-token",
-  "message": "Login successful"
-}
-```
-
-## 6. Roles
-
-| Role | Description |
-| --- | --- |
-| MANAGER | Full access to the system |
-| DISPATCHER | Handles customers, sites, service requests, and work orders |
-| TECHNICIAN | Works on assigned work orders, logs time, and uses parts |
-| CUSTOMER | Creates sites and raises service requests |
-
-## 7. Role Permissions
-
-### 7.1 Manager
-
-Manager has all permissions.
-
-Manager can:
-
-1. Manage users
-2. Manage customers
-3. Manage sites
-4. Manage work orders
-5. Manage parts
-6. View dashboard
-7. View SLA reports
-8. Review and convert service requests
-
-### 7.2 Dispatcher
-
-Dispatcher can:
-
-1. Create, update, and view customers
-2. Create, update, and view sites
-3. Create, update, view, assign, cancel, and close work orders
-4. View dashboard
-5. Review service requests
-6. Convert service requests to work orders
-7. Close or cancel service requests
-
-### 7.3 Technician
-
-Technician can:
-
-1. View work orders
-2. Accept assigned work
-3. Start work
-4. Hold work
-5. Resume work
-6. Complete work
-7. View parts
-8. Use parts
-9. Add time logs
-10. View time logs
-
-### 7.4 Customer
-
-Customer can:
-
-1. Create site
-2. Update site
-3. Raise service request
-4. View own service requests
-
-## 8. API Base URL
-
-For local development:
+Open:
 
 ```text
-http://localhost:8081
+http://localhost:10000
 ```
 
-For live deployment, use the deployed backend URL.
+The root `Dockerfile` is the deployment Dockerfile. Do not build from the `backend` directory.
 
-For live backend:
+## Production Deployment
+
+Use this deployment configuration for Render or any Docker-based hosting platform.
+
+Build settings:
+
+| Setting | Value |
+| --- | --- |
+| Build context | Repository root |
+| Dockerfile | `Dockerfile` |
+| Runtime port | `${PORT}` |
+| Default container port | `10000` |
+
+Required production environment variables:
+
+```env
+DATABASE_URL=jdbc:postgresql://YOUR_NEON_HOST/YOUR_DATABASE?sslmode=require
+DATABASE_USERNAME=YOUR_NEON_USERNAME
+DATABASE_PASSWORD=YOUR_NEON_PASSWORD
+JWT_SECRET=your_64_character_secret
+JWT_EXPIRATION_MS=43200000
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_mailtrap_username
+MAIL_PASSWORD=your_mailtrap_password
+```
+
+Example live URLs:
 
 ```text
 https://keystone-fieldservice.onrender.com
+https://keystone-fieldservice.onrender.com/login
+https://keystone-fieldservice.onrender.com/dashboard
+https://keystone-fieldservice.onrender.com/api/...
 ```
 
-## 9. Public APIs
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | `/api/user_auth/register` | Register a customer user |
-| POST | `/api/user_auth/login` | Login user |
-| POST | `/api/user_auth/setup-manager` | Create initial manager |
-| POST | `/api/user_auth/logout` | Logout current token |
-| POST | `/api/user_auth/forgetPassword` | Send password reset email |
-| POST | `/api/user_auth/resetPassword` | Reset user password |
-| POST | `/api/email_log/resetPasswordEmail` | Send reset password email |
-| POST | `/api/email_log/notify` | Send notification email |
-| GET | `/actuator/health` | Backend health check |
-
-## 10. Auth APIs
-
-### 10.1 Register Customer
+Health check:
 
 ```http
-POST /api/user_auth/register
+GET https://keystone-fieldservice.onrender.com/actuator/health
 ```
 
-Request body:
+## Authentication
 
-```json
-{
-  "userName": "Ashwin",
-  "userEmail": "customer@example.com",
-  "phone": "9876543210",
-  "companyName": "ABC Industries",
-  "password": "password123"
-}
+The backend uses JWT authentication. Protected API requests must include the token returned by the login endpoint:
+
+```http
+Authorization: Bearer <jwt_token>
 ```
 
-### 10.2 Login
+Login:
 
 ```http
 POST /api/user_auth/login
 ```
-
-Request body:
 
 ```json
 {
@@ -304,56 +211,54 @@ Request body:
 }
 ```
 
-### 10.3 Get Current User
+## Roles
 
-```http
-GET /api/user_auth/me
-```
+| Role | Access |
+| --- | --- |
+| `MANAGER` | Full system access, user management, reports, dashboards, request review, and work order management |
+| `DISPATCHER` | Customer/site management, service request review, work order creation, assignment, cancellation, and closure |
+| `TECHNICIAN` | Assigned work orders, work progress updates, time logs, and part usage |
+| `CUSTOMER` | Own sites and service requests |
 
-Requires:
+## Role-Based REST API Usage
+
+All protected requests require a bearer token:
 
 ```http
 Authorization: Bearer <jwt_token>
 ```
 
-### 10.4 Get Technicians
-
-```http
-GET /api/user_auth/technicians
-```
-
-Allowed permissions:
+Use the same API paths for localhost and production. Only the base URL changes:
 
 ```text
-VIEW_USER
-ASSIGN_WO
+Local backend: http://localhost:8081
+Local Docker:  http://localhost:10000
+Production:    https://keystone-fieldservice.onrender.com
 ```
 
-### 10.5 Get Staff Users
+### Manager API Structure
 
-```http
-GET /api/user_auth/staff
-```
+Managers have full operational access. A typical manager flow is to create staff users, manage customers and sites, create or assign work orders, manage inventory, and review dashboard/SLA reports.
 
-Allowed permission:
+| Action | Method | Endpoint |
+| --- | --- | --- |
+| Create staff user | `POST` | `/api/user_auth/staff` |
+| View staff users | `GET` | `/api/user_auth/staff` |
+| Manage customers | `POST`, `GET`, `PUT`, `DELETE` | `/api/customers` |
+| Manage sites | `POST`, `GET`, `PUT`, `DELETE` | `/api/sites` |
+| Manage work orders | `POST`, `GET`, `PUT`, `DELETE` | `/api/workorders` |
+| Assign technician | `PUT` | `/api/workorders/{id}/assign/{technicianId}` |
+| Manage parts | `POST`, `GET`, `PUT`, `DELETE` | `/api/parts` |
+| View dashboard | `GET` | `/api/dashboard` |
+| View SLA reports | `GET` | `/api/sla/overdue` |
 
-```text
-VIEW_USER
-```
-
-### 10.6 Create Staff User
+Create a technician:
 
 ```http
 POST /api/user_auth/staff
+Authorization: Bearer <manager_jwt_token>
+Content-Type: application/json
 ```
-
-Allowed permission:
-
-```text
-CREATE_USER
-```
-
-Request body:
 
 ```json
 {
@@ -365,29 +270,48 @@ Request body:
 }
 ```
 
-### 10.7 Forgot Password
+Create a work order:
 
 ```http
-POST /api/user_auth/forgetPassword?userEmail=user@example.com
+POST /api/workorders
+Authorization: Bearer <manager_jwt_token>
+Content-Type: application/json
 ```
 
-### 10.8 Reset Password
-
-```http
-POST /api/user_auth/resetPassword?token=reset-token&newPassword=newPassword123
+```json
+{
+  "title": "Repair AC unit",
+  "description": "Inspect and repair the AC unit on the first floor",
+  "priority": "HIGH",
+  "status": "OPEN",
+  "siteId": 1,
+  "assignedTechnicianId": 3,
+  "scheduledAt": "2026-09-15T10:00:00"
+}
 ```
 
-## 11. Customer APIs
+### Dispatcher API Structure
 
-| Method | Endpoint | Permission |
+Dispatchers handle day-to-day service operations. They can maintain customers and sites, review service requests, convert requests into work orders, and assign technicians.
+
+| Action | Method | Endpoint |
 | --- | --- | --- |
-| POST | `/api/customers` | CREATE_CUSTOMER |
-| GET | `/api/customers` | VIEW_CUSTOMER |
-| GET | `/api/customers/{id}` | VIEW_CUSTOMER |
-| PUT | `/api/customers/{id}` | UPDATE_CUSTOMER |
-| DELETE | `/api/customers/{id}` | DELETE_CUSTOMER |
+| Create customer | `POST` | `/api/customers` |
+| Create site | `POST` | `/api/sites` |
+| Review service requests | `GET` | `/api/service-requests` |
+| Mark request in review | `PUT` | `/api/service-requests/{id}/review` |
+| Convert request to work order | `POST` | `/api/service-requests/{id}/convert` |
+| Create work order | `POST` | `/api/workorders` |
+| Assign technician | `PUT` | `/api/workorders/{id}/assign/{technicianId}` |
+| Close work order | `PUT` | `/api/workorders/{id}/close` |
 
-Request body:
+Create a customer:
+
+```http
+POST /api/customers
+Authorization: Bearer <dispatcher_jwt_token>
+Content-Type: application/json
+```
 
 ```json
 {
@@ -395,64 +319,220 @@ Request body:
   "contactPerson": "Ashwin",
   "email": "customer@example.com",
   "phone": "9876543210",
-  "address": "Street address",
+  "address": "12 Industrial Road",
   "city": "Chennai",
   "state": "Tamil Nadu",
   "postalCode": "600001"
 }
 ```
 
-## 12. Site APIs
+Convert a service request to a work order:
 
-| Method | Endpoint | Permission |
+```http
+POST /api/service-requests/5/convert
+Authorization: Bearer <dispatcher_jwt_token>
+```
+
+### Technician API Structure
+
+Technicians work on assigned jobs. They can view work orders, update work progress, log time, view parts, and record parts used on a work order.
+
+| Action | Method | Endpoint |
 | --- | --- | --- |
-| POST | `/api/sites` | CREATE_SITE |
-| GET | `/api/sites` | VIEW_SITE |
-| GET | `/api/sites/mine` | Authenticated user |
-| GET | `/api/sites/customer/{customerId}` | VIEW_SITE |
-| GET | `/api/sites/{id}` | VIEW_SITE |
-| PUT | `/api/sites/{id}` | UPDATE_SITE |
-| DELETE | `/api/sites/{id}` | DELETE_SITE |
+| View work orders | `GET` | `/api/workorders` |
+| View assigned work orders | `GET` | `/api/workorders/technician/{technicianId}` |
+| Accept work order | `PUT` | `/api/workorders/{id}/accept` |
+| Start work | `PUT` | `/api/workorders/{id}/start` |
+| Hold work | `PUT` | `/api/workorders/{id}/hold` |
+| Resume work | `PUT` | `/api/workorders/{id}/resume` |
+| Complete work | `PUT` | `/api/workorders/{id}/complete` |
+| Start time log | `POST` | `/api/time-logs/start` |
+| Stop time log | `PUT` | `/api/time-logs/{id}/stop` |
+| Use part | `POST` | `/api/workorder-parts/use` |
 
-Request body:
+Start a work order:
+
+```http
+PUT /api/workorders/10/start
+Authorization: Bearer <technician_jwt_token>
+```
+
+Start a time log:
+
+```http
+POST /api/time-logs/start
+Authorization: Bearer <technician_jwt_token>
+Content-Type: application/json
+```
 
 ```json
 {
-  "siteName": "Main Office",
-  "address": "Street address",
-  "city": "Chennai",
-  "state": "Tamil Nadu",
-  "pincode": "600001",
-  "customerId": 1
+  "workOrderId": 10,
+  "technicianId": 3,
+  "notes": "Started diagnosis"
 }
 ```
 
-## 13. Service Request APIs
+Record part usage:
 
-| Method | Endpoint | Permission |
+```http
+POST /api/workorder-parts/use
+Authorization: Bearer <technician_jwt_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "workOrderId": 10,
+  "partId": 2,
+  "quantityUsed": 1
+}
+```
+
+### Customer API Structure
+
+Customers can register, manage their own sites, raise service requests, and view their own requests.
+
+| Action | Method | Endpoint |
 | --- | --- | --- |
-| POST | `/api/service-requests` | RAISE_REQUEST |
-| GET | `/api/service-requests/mine` | VIEW_OWN_REQUEST |
-| GET | `/api/service-requests` | REVIEW_REQUEST |
-| GET | `/api/service-requests/customer/{customerId}` | REVIEW_REQUEST |
-| GET | `/api/service-requests/status/{status}` | REVIEW_REQUEST |
-| GET | `/api/service-requests/{id}` | REVIEW_REQUEST |
-| PUT | `/api/service-requests/{id}/review` | REVIEW_REQUEST |
-| POST | `/api/service-requests/{id}/convert` | CONVERT_REQUEST |
-| PUT | `/api/service-requests/{id}/close` | CLOSE_REQUEST |
-| PUT | `/api/service-requests/{id}/cancel` | CANCEL_REQUEST |
+| Register customer user | `POST` | `/api/user_auth/register` |
+| View own profile | `GET` | `/api/user_auth/me` |
+| Create site | `POST` | `/api/sites` |
+| View own sites | `GET` | `/api/sites/mine` |
+| Raise service request | `POST` | `/api/service-requests` |
+| View own service requests | `GET` | `/api/service-requests/mine` |
 
-Request body:
+Register a customer:
+
+```http
+POST /api/user_auth/register
+Content-Type: application/json
+```
+
+```json
+{
+  "userName": "Customer One",
+  "userEmail": "customer@example.com",
+  "phone": "9876543210",
+  "companyName": "ABC Industries",
+  "password": "password123"
+}
+```
+
+Raise a service request:
+
+```http
+POST /api/service-requests
+Authorization: Bearer <customer_jwt_token>
+Content-Type: application/json
+```
 
 ```json
 {
   "siteId": 1,
-  "title": "AC not working",
-  "description": "Cooling issue in first floor"
+  "title": "AC not cooling",
+  "description": "The AC unit on the first floor is not cooling properly"
 }
 ```
 
-Service request statuses:
+## Core Workflow
+
+1. Create the initial manager with `/api/user_auth/setup-manager`.
+2. Login as manager.
+3. Create dispatcher and technician users.
+4. Register or create a customer.
+5. Create customer sites.
+6. Raise a service request.
+7. Review the request as dispatcher or manager.
+8. Convert the request into a work order.
+9. Assign the work order to a technician.
+10. Track technician progress, time logs, and part usage.
+11. Complete and close the work order.
+12. Review dashboards and SLA reports.
+
+## API Reference
+
+Base URL:
+
+```text
+Local backend: http://localhost:8081
+Local Docker:  http://localhost:10000
+Live:          https://keystone-fieldservice.onrender.com
+```
+
+### Public Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/user_auth/register` | Register a customer user |
+| `POST` | `/api/user_auth/login` | Login user |
+| `POST` | `/api/user_auth/setup-manager` | Create initial manager |
+| `POST` | `/api/user_auth/logout` | Logout current token |
+| `POST` | `/api/user_auth/forgetPassword` | Send password reset email |
+| `POST` | `/api/user_auth/resetPassword` | Reset user password |
+| `POST` | `/api/email_log/resetPasswordEmail` | Send reset password email |
+| `POST` | `/api/email_log/notify` | Send notification email |
+| `GET` | `/actuator/health` | Application health check |
+
+### User Auth
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| `GET` | `/api/user_auth/me` | Authenticated user |
+| `GET` | `/api/user_auth/technicians` | `VIEW_USER`, `ASSIGN_WO` |
+| `GET` | `/api/user_auth/staff` | `VIEW_USER` |
+| `POST` | `/api/user_auth/staff` | `CREATE_USER` |
+
+Create staff user body:
+
+```json
+{
+  "userName": "Technician One",
+  "userEmail": "tech@example.com",
+  "phone": "9876543210",
+  "password": "password123",
+  "role": "TECHNICIAN"
+}
+```
+
+### Customers
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` | `/api/customers` | `CREATE_CUSTOMER` |
+| `GET` | `/api/customers` | `VIEW_CUSTOMER` |
+| `GET` | `/api/customers/{id}` | `VIEW_CUSTOMER` |
+| `PUT` | `/api/customers/{id}` | `UPDATE_CUSTOMER` |
+| `DELETE` | `/api/customers/{id}` | `DELETE_CUSTOMER` |
+
+### Sites
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` | `/api/sites` | `CREATE_SITE` |
+| `GET` | `/api/sites` | `VIEW_SITE` |
+| `GET` | `/api/sites/mine` | Authenticated user |
+| `GET` | `/api/sites/customer/{customerId}` | `VIEW_SITE` |
+| `GET` | `/api/sites/{id}` | `VIEW_SITE` |
+| `PUT` | `/api/sites/{id}` | `UPDATE_SITE` |
+| `DELETE` | `/api/sites/{id}` | `DELETE_SITE` |
+
+### Service Requests
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` | `/api/service-requests` | `RAISE_REQUEST` |
+| `GET` | `/api/service-requests/mine` | `VIEW_OWN_REQUEST` |
+| `GET` | `/api/service-requests` | `REVIEW_REQUEST` |
+| `GET` | `/api/service-requests/customer/{customerId}` | `REVIEW_REQUEST` |
+| `GET` | `/api/service-requests/status/{status}` | `REVIEW_REQUEST` |
+| `GET` | `/api/service-requests/{id}` | `REVIEW_REQUEST` |
+| `PUT` | `/api/service-requests/{id}/review` | `REVIEW_REQUEST` |
+| `POST` | `/api/service-requests/{id}/convert` | `CONVERT_REQUEST` |
+| `PUT` | `/api/service-requests/{id}/close` | `CLOSE_REQUEST` |
+| `PUT` | `/api/service-requests/{id}/cancel` | `CANCEL_REQUEST` |
+
+Statuses:
 
 ```text
 OPEN
@@ -462,42 +542,28 @@ CLOSED
 CANCELLED
 ```
 
-## 14. Work Order APIs
+### Work Orders
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
-| POST | `/api/workorders` | CREATE_WO |
-| GET | `/api/workorders` | VIEW_WO |
-| GET | `/api/workorders/{id}` | VIEW_WO |
-| PUT | `/api/workorders/{id}` | UPDATE_WO |
-| DELETE | `/api/workorders/{id}` | DELETE_WO |
-| GET | `/api/workorders/site/{siteId}` | VIEW_WO |
-| GET | `/api/workorders/technician/{technicianId}` | VIEW_WO |
-| GET | `/api/workorders/status/{status}` | VIEW_WO |
-| PUT | `/api/workorders/{id}/assign/{technicianId}` | ASSIGN_WO |
-| PUT | `/api/workorders/{id}/accept` | START_WORK |
-| PUT | `/api/workorders/{id}/start` | START_WORK |
-| PUT | `/api/workorders/{id}/hold` | HOLD_WORK |
-| PUT | `/api/workorders/{id}/resume` | RESUME_WORK |
-| PUT | `/api/workorders/{id}/complete` | COMPLETED_WORK |
-| PUT | `/api/workorders/{id}/cancel` | CANCEL_WO |
-| PUT | `/api/workorders/{id}/close` | CLOSE_WO |
+| `POST` | `/api/workorders` | `CREATE_WO` |
+| `GET` | `/api/workorders` | `VIEW_WO` |
+| `GET` | `/api/workorders/{id}` | `VIEW_WO` |
+| `PUT` | `/api/workorders/{id}` | `UPDATE_WO` |
+| `DELETE` | `/api/workorders/{id}` | `DELETE_WO` |
+| `GET` | `/api/workorders/site/{siteId}` | `VIEW_WO` |
+| `GET` | `/api/workorders/technician/{technicianId}` | `VIEW_WO` |
+| `GET` | `/api/workorders/status/{status}` | `VIEW_WO` |
+| `PUT` | `/api/workorders/{id}/assign/{technicianId}` | `ASSIGN_WO` |
+| `PUT` | `/api/workorders/{id}/accept` | `START_WORK` |
+| `PUT` | `/api/workorders/{id}/start` | `START_WORK` |
+| `PUT` | `/api/workorders/{id}/hold` | `HOLD_WORK` |
+| `PUT` | `/api/workorders/{id}/resume` | `RESUME_WORK` |
+| `PUT` | `/api/workorders/{id}/complete` | `COMPLETED_WORK` |
+| `PUT` | `/api/workorders/{id}/cancel` | `CANCEL_WO` |
+| `PUT` | `/api/workorders/{id}/close` | `CLOSE_WO` |
 
-Request body:
-
-```json
-{
-  "title": "Repair AC",
-  "description": "Inspect and repair AC unit",
-  "priority": "HIGH",
-  "status": "OPEN",
-  "siteId": 1,
-  "assignedTechnicianId": 3,
-  "scheduledAt": "2026-09-01T10:00:00"
-}
-```
-
-Work order statuses:
+Statuses:
 
 ```text
 OPEN
@@ -519,111 +585,65 @@ HIGH
 CRITICAL
 ```
 
-## 15. Parts APIs
+### Parts
 
 | Method | Endpoint | Permission |
 | --- | --- | --- |
-| POST | `/api/parts` | ADD_PARTS |
-| GET | `/api/parts` | VIEW_PARTS |
-| GET | `/api/parts/{id}` | VIEW_PARTS |
-| PUT | `/api/parts/{id}` | UPDATE_PARTS |
-| PUT | `/api/parts/{id}/stock/{quantity}` | UPDATE_PARTS |
-| DELETE | `/api/parts/{id}` | DELETE_PART |
+| `POST` | `/api/parts` | `ADD_PARTS` |
+| `GET` | `/api/parts` | `VIEW_PARTS` |
+| `GET` | `/api/parts/{id}` | `VIEW_PARTS` |
+| `PUT` | `/api/parts/{id}` | `UPDATE_PARTS` |
+| `PUT` | `/api/parts/{id}/stock/{quantity}` | `UPDATE_PARTS` |
+| `DELETE` | `/api/parts/{id}` | `DELETE_PART` |
 
-Request body:
+### Work Order Parts
 
-```json
-{
-  "name": "Filter",
-  "sku": "FLT-001",
-  "quantity": 20,
-  "unitPrice": 150.00
-}
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` | `/api/workorder-parts/use` | `USE_PARTS` |
+| `GET` | `/api/workorder-parts` | `VIEW_PARTS` |
+| `GET` | `/api/workorder-parts/workorder/{workOrderId}` | `VIEW_PARTS` |
+
+### Time Logs
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` | `/api/time-logs/start` | `ADD_LOG_TIME` |
+| `PUT` | `/api/time-logs/{id}/stop` | `ADD_LOG_TIME` |
+| `GET` | `/api/time-logs` | `VIEW_LOG_TIME` |
+| `GET` | `/api/time-logs/workorder/{workOrderId}` | `VIEW_LOG_TIME` |
+| `GET` | `/api/time-logs/technician/{technicianId}` | `VIEW_LOG_TIME` |
+
+### Dashboard and SLA
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `GET` | `/api/dashboard` | `VIEW_DASHBOARD` |
+| `GET` | `/api/sla/overdue` | `VIEW_REPORTS` |
+| `GET` | `/api/sla/overdue/count` | `VIEW_REPORTS` |
+
+## Verification
+
+Backend package:
+
+```bash
+cd backend
+./mvnw -DskipTests package
 ```
 
-## 16. Work Order Parts APIs
+Frontend production build:
 
-| Method | Endpoint | Permission |
-| --- | --- | --- |
-| POST | `/api/workorder-parts/use` | USE_PARTS |
-| GET | `/api/workorder-parts` | VIEW_PARTS |
-| GET | `/api/workorder-parts/workorder/{workOrderId}` | VIEW_PARTS |
-
-Request body:
-
-```json
-{
-  "workOrderId": 1,
-  "partId": 2,
-  "quantityUsed": 1
-}
+```bash
+cd frontend
+npm run build
 ```
 
-## 17. Time Log APIs
+> [!NOTE]
+> Render free or low-traffic services may take extra time to respond after inactivity while the instance starts again. The first request can be slower; later requests should respond normally.
 
-| Method | Endpoint | Permission |
-| --- | --- | --- |
-| POST | `/api/time-logs/start` | ADD_LOG_TIME |
-| PUT | `/api/time-logs/{id}/stop` | ADD_LOG_TIME |
-| GET | `/api/time-logs` | VIEW_LOG_TIME |
-| GET | `/api/time-logs/workorder/{workOrderId}` | VIEW_LOG_TIME |
-| GET | `/api/time-logs/technician/{technicianId}` | VIEW_LOG_TIME |
+## Operational Notes
 
-Request body:
-
-```json
-{
-  "workOrderId": 1,
-  "technicianId": 3,
-  "notes": "Started diagnosis"
-}
-```
-
-## 18. Dashboard APIs
-
-| Method | Endpoint | Permission |
-| --- | --- | --- |
-| GET | `/api/dashboard` | VIEW_DASHBOARD |
-
-## 19. SLA APIs
-
-| Method | Endpoint | Permission |
-| --- | --- | --- |
-| GET | `/api/sla/overdue` | VIEW_REPORTS |
-| GET | `/api/sla/overdue/count` | VIEW_REPORTS |
-
-## 20. Postman Collection
-
-Use this Postman collection to test the APIs:
-
-```text
-https://gemini-api-4388.postman.co/workspace/SpringAi-demo~f58e6eb7-eb31-40b7-a543-9bd1e05cf9d5/collection/46686891-6038d9d5-f466-4a9b-8b26-f29355870e6c?action=share&creator=46686891&active-environment=46686891-acea7e03-70fc-423a-b4d7-a69fd8f22a51
-```
-
-## 21. Common Workflow
-
-1. Create the first manager using `/api/user_auth/setup-manager`.
-2. Login as manager.
-3. Create dispatcher and technician users.
-4. Register or create customer.
-5. Create customer site.
-6. Customer raises service request.
-7. Dispatcher or manager reviews the request.
-8. Dispatcher or manager converts the request into a work order.
-9. Dispatcher assigns the work order to a technician.
-10. Technician accepts and starts the work.
-11. Technician logs time and uses parts.
-12. Technician completes the work.
-13. Dispatcher or manager closes the work order.
-14. Manager reviews dashboard and SLA reports.
-
-## 22. Important Notes
-
-1. Keep NeonDB credentials in environment variables.
-2. `application.properties` uses environment placeholders.
-3. Localhost and live deployment can use the same NeonDB database when the same database variables are configured.
-4. Default frontend origin is `http://localhost:5173`.
-5. Default backend port is `8081`.
-6. The live frontend is `https://keystone-fieldservice.netlify.app`.
-7. The live backend is `https://keystone-fieldservice.onrender.com`.
-8. Render may take extra time to respond on the first request after inactivity.
+- Keep database, mail, and JWT secrets out of source control.
+- Use the repository root as the Docker build context.
+- The root `Dockerfile` is the only Dockerfile required for deployment.
+- Local development can run as two services; Docker and live deployment run as one service.
