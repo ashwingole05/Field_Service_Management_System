@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class FrontendController {
 
 	@GetMapping(value = {
-			"/{path:^(?!api|actuator).*$}",
-			"/**/{path:^(?!api|actuator).*$}"
+			"/{path:^(?!api|actuator|assets|index\\.html$|favicon\\.svg$|icons\\.svg$)[^.]*$}",
+			"/**/{path:^(?!api|actuator|assets|index\\.html$|favicon\\.svg$|icons\\.svg$)[^.]*$}"
 	})
 	public String forwardFrontendRoutes() {
 		return "forward:/index.html";
